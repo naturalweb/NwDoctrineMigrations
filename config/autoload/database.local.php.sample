@@ -1,0 +1,43 @@
+<?php
+## Arquivo de Configuração Database
+$driver = "pdo_mysql";
+$host = "localhost";
+$username = "root";
+$password = "";
+$database = "";
+$charset  = 'utf8';
+$port  = '3306';
+
+$dsn = sprintf("mysql:dbname=%s;host=%s;charset=%s", $database, $host, $charset);
+
+$dir = dirname(__DIR__);
+return array(
+    'db' => array(
+        'driver'         => $driver,
+        'username'       => $username,
+        'password'       => $password,
+        'dsn'            => $dsn,
+        'charset'        => $charset,
+        'port'           => $port,
+        'driver_options' => array(
+            PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES '".$charset."'"
+        ),
+    ),
+    
+    ## Definição das Configurações para Migrations
+    'migrations' => array(
+        'db' => array(
+            'driver'   => $driver,
+            'host'     => $host,
+            'user'     => $username,
+            'password' => $password,
+            'dbname'   => $database,
+            'charset'  => $charset,
+            'port'     => $port,
+        ),
+        'name'       => 'Migrations Database - ZendFramework 2',
+        'table_name' => 'migration_versions',
+        'namespace'  => 'DoctrineMigrations',
+        'directory'  =>  $dir . "/../data/migrations",
+    ),
+);

@@ -1,0 +1,31 @@
+{
+    "name": "naturalweb/doctrine-migrations",
+    "description": "Binario responsavel para criar as migrações do banco de dados para Zend Framework 2",
+    "type": "library",
+    "keywords": [
+        "zf2", "zend", "naturalweb", "migrations", "database"
+    ],
+    "license": "BSD-3-Clause",
+    "version": "0.0.1",
+    "authors": [
+        {
+            "name": "Renato Moura",
+            "email": "renato@naturalweb.com.br"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.3",
+        "symfony/console": "2.*",
+        "symfony/yaml": "2.*",
+        "doctrine/migrations": "dev-master"
+    },
+    "suggest": {
+        "zendframework/zendframework": "2.0.*"
+    },
+    "bin": [
+        "bin/doctrine"
+    ],
+    "config": {
+        "bin-dir": "bin"
+    }
+}

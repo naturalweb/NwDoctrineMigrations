@@ -1,0 +1,128 @@
+#!/usr/bin/env php
+<?php
+
+$vendorDir = __DIR__ . '/../../../../vendor';
+require_once $vendorDir . '/autoload.php';
+
+use Doctrine\Common\ClassLoader;
+
+$classLoader = new ClassLoader('Doctrine\DBAL\Migrations', $vendorDir . '/doctrine/migrations/lib');
+$classLoader->register();
+
+/**
+ * Opções do host e o database
+ *
+ *  --vhost=[NAME_HOST]
+ *  
+ *  eg: ./config/autoload/database.[vhost].php
+ */
+$argv = $_SERVER['argv'];
+array_shift($argv);
+$options = array(
+    'vhost' => 'local',
+);
+while (null !== $token = array_shift($argv)) {
+    if (0 === strpos($token, '--')) {
+        $name = substr($token, 2); 
+        if (false !== $pos = strpos($name, '=')) {
+            $opt = substr($name, 0, $pos);
+            $val = substr($name, $pos + 1);
+            if ( array_key_exists($opt, $options) ) {
+                $options[$opt] = $val;
+            }
+        }
+    }
+}
+
+// Symfony
+use Symfony\Component\Console\Application,
+    Symfony\Component\Console\Helper\HelperSet,
+    Symfony\Component\Console\Helper\DialogHelper,
+    Symfony\Component\Console\Input\InputOption;
+
+// namespacing migrations commands we will be needing later
+use Doctrine\DBAL\Tools\Console\Helper\ConnectionHelper,
+    Doctrine\DBAL\DriverManager,
+    Doctrine\DBAL\Migrations\Configuration\Configuration,
+    Doctrine\DBAL\Migrations\Tools\Console\Command\DiffCommand,
+    Doctrine\DBAL\Migrations\Tools\Console\Command\ExecuteCommand,
+    Doctrine\DBAL\Migrations\Tools\Console\Command\GenerateCommand,
+    Doctrine\DBAL\Migrations\Tools\Console\Command\MigrateCommand,
+    Doctrine\DBAL\Migrations\Tools\Console\Command\StatusCommand,
+    Doctrine\DBAL\Migrations\Tools\Console\Command\VersionCommand;
+
+$fileConfig = 'database.'.$options['vhost'].'.php';
+$pathConfig = $vendorDir . '/../config/autoload/';
+$params = @include($pathConfig . $fileConfig);
+if (!isset($params['migrations'])) {
+    echo PHP_EOL;
+    echo "- [ERROR] Arquivo de Config Database \"{$fileConfig}\"não encontrado para o vhost: {$options['vhost']}";
+    echo PHP_EOL;
+    echo PHP_EOL;
+    exit();
+}
+
+$db = DriverManager::getConnection($params['migrations']['db']);
+
+// Load doctrine helpers
+$helperSet = new HelperSet(
+    array(
+        'db' => new ConnectionHelper($db),
+        'dialog' => new DialogHelper()
+    )
+);
+    
+// Application Console
+$cli = new Application('Doctrine Command Line Interface', '2.3.1');
+$cli->setCatchExceptions(true);
+$cli->setHelperSet($helperSet);
+
+$config = new Configuration($db);
+$config->setName($params['migrations']['name']);
+$config->setMigrationsTableName($params['migrations']['table_name']);
+$config->setMigrationsNamespace($params['migrations']['namespace']);
+$config->setMigrationsDirectory($params['migrations']['directory']);
+
+$vhostDefault = 'local';
+
+$vhostHelp = 'Virtual Host do Dominio';
+
+// Setting up Migrations Commands
+//$diffCmd = new DiffCommand();
+//$diffCmd->setMigrationConfiguration($config);
+//$diffCmd->addOption('vhost', null, InputOption::VALUE_OPTIONAL, $vhostHelp, $vhostDefault);
+
+$executeCmd = new ExecuteCommand();
+$executeCmd->setMigrationConfiguration($config);
+$executeCmd->addOption('vhost', null, InputOption::VALUE_OPTIONAL, $vhostHelp, $vhostDefault);
+
+$generateCmd = new GenerateCommand();
+$generateCmd->setMigrationConfiguration($config);
+$generateCmd->addOption('vhost', null, InputOption::VALUE_OPTIONAL, $vhostHelp, $vhostDefault);
+
+$migrateCmd = new MigrateCommand();
+$migrateCmd->setMigrationConfiguration($config);
+$migrateCmd->addOption('vhost', null, InputOption::VALUE_OPTIONAL, $vhostHelp, $vhostDefault);
+
+$statusCmd = new StatusCommand();
+$statusCmd->setMigrationConfiguration($config);
+$statusCmd->addOption('vhost', null, InputOption::VALUE_OPTIONAL, $vhostHelp, $vhostDefault);
+
+$versionCmd = new VersionCommand();
+$versionCmd->setMigrationConfiguration($config);
+$versionCmd->addOption('vhost', null, InputOption::VALUE_OPTIONAL, $vhostHelp, $vhostDefault);
+
+// Register migration Commands
+$cli->addCommands(
+    array(
+        //$diffCmd,
+        $executeCmd,
+        $generateCmd,
+        $migrateCmd,
+        $statusCmd,
+        $versionCmd
+    )
+);
+
+// Runs console application
+$cli->run();
