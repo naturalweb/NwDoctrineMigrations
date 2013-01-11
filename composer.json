@@ -16,7 +16,8 @@
     "require": {
         "php": ">=5.3.3",
         "symfony/console": "2.*",
-        "symfony/yaml": "2.*"
+        "symfony/yaml": "2.*",
+        "doctrine/migrations": "dev-master"
     },
     "suggest": {
         "zendframework/zendframework": "2.0.*"
