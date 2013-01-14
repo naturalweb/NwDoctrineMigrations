@@ -1,11 +1,30 @@
 #!/usr/bin/env php
 <?php
+$baseDir = realpath(__DIR__ . '/../../../..');
+$vendorDir = $baseDir . "/vendor";
 
-$vendorDir = __DIR__ . '/../../../../vendor';
 require_once $vendorDir . '/autoload.php';
 
-use Doctrine\Common\ClassLoader;
+// Symfony
+use Symfony\Component\Console\Application,
+    Symfony\Component\Console\Helper\HelperSet,
+    Symfony\Component\Console\Helper\DialogHelper,
+    Symfony\Component\Console\Input\InputOption,
+    Symfony\Component\Console\Output\ConsoleOutput;
 
+// namespacing migrations commands we will be needing later
+use Doctrine\Common\ClassLoader,
+    Doctrine\DBAL\Tools\Console\Helper\ConnectionHelper,
+    Doctrine\DBAL\DriverManager,
+    Doctrine\DBAL\Migrations\Configuration\Configuration,
+    Doctrine\DBAL\Migrations\OutputWriter,
+    Doctrine\DBAL\Migrations\Tools\Console\Command\DiffCommand,
+    Doctrine\DBAL\Migrations\Tools\Console\Command\ExecuteCommand,
+    Doctrine\DBAL\Migrations\Tools\Console\Command\GenerateCommand,
+    Doctrine\DBAL\Migrations\Tools\Console\Command\MigrateCommand,
+    Doctrine\DBAL\Migrations\Tools\Console\Command\StatusCommand,
+    Doctrine\DBAL\Migrations\Tools\Console\Command\VersionCommand;
+    
 $classLoader = new ClassLoader('Doctrine\DBAL\Migrations', $vendorDir . '/doctrine/migrations/lib');
 $classLoader->register();
 
@@ -34,25 +53,8 @@ while (null !== $token = array_shift($argv)) {
     }
 }
 
-// Symfony
-use Symfony\Component\Console\Application,
-    Symfony\Component\Console\Helper\HelperSet,
-    Symfony\Component\Console\Helper\DialogHelper,
-    Symfony\Component\Console\Input\InputOption;
-
-// namespacing migrations commands we will be needing later
-use Doctrine\DBAL\Tools\Console\Helper\ConnectionHelper,
-    Doctrine\DBAL\DriverManager,
-    Doctrine\DBAL\Migrations\Configuration\Configuration,
-    Doctrine\DBAL\Migrations\Tools\Console\Command\DiffCommand,
-    Doctrine\DBAL\Migrations\Tools\Console\Command\ExecuteCommand,
-    Doctrine\DBAL\Migrations\Tools\Console\Command\GenerateCommand,
-    Doctrine\DBAL\Migrations\Tools\Console\Command\MigrateCommand,
-    Doctrine\DBAL\Migrations\Tools\Console\Command\StatusCommand,
-    Doctrine\DBAL\Migrations\Tools\Console\Command\VersionCommand;
-
 $fileConfig = 'database.'.$options['vhost'].'.php';
-$pathConfig = $vendorDir . '/../config/autoload/';
+$pathConfig = $baseDir . '/config/autoload/';
 $params = @include($pathConfig . $fileConfig);
 if (!isset($params['migrations'])) {
     echo PHP_EOL;
@@ -77,11 +79,19 @@ $cli = new Application('Doctrine Command Line Interface', '2.3.1');
 $cli->setCatchExceptions(true);
 $cli->setHelperSet($helperSet);
 
-$config = new Configuration($db);
+$output = new ConsoleOutput;
+$outputWriter = new OutputWriter(
+    function($message) use ($output){
+        return $output->writeln($message);
+    }
+);
+
+$config = new Configuration($db, $outputWriter);
 $config->setName($params['migrations']['name']);
 $config->setMigrationsTableName($params['migrations']['table_name']);
 $config->setMigrationsNamespace($params['migrations']['namespace']);
 $config->setMigrationsDirectory($params['migrations']['directory']);
+$config->registerMigrationsFromDirectory($params['migrations']['directory']);
 
 $vhostDefault = 'local';
 
