@@ -6,7 +6,7 @@
         "zf2", "zend", "naturalweb", "migrations", "database"
     ],
     "license": "BSD-3-Clause",
-    "version": "0.0.1",
+    "homepage": "https://github.com/naturalweb/NwDoctrineMigrations",
     "authors": [
         {
             "name": "Renato Moura",
