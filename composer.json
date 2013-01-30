@@ -20,7 +20,7 @@
         "doctrine/migrations": "dev-master"
     },
     "suggest": {
-        "zendframework/zendframework": "2.0.*"
+        "zendframework/zendframework": "2.*"
     },
     "bin": [
         "bin/doctrine"
